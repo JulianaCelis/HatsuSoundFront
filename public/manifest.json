@@ -1,0 +1,12 @@
+{
+  "short_name": "HatsuSound",
+  "name": "HatsuSound - Plataforma de Música Profesional",
+  "description": "Tu plataforma de música profesional",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#6366f1",
+  "background_color": "#0f0f23",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "es"
+}
