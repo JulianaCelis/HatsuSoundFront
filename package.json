@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Simple React landing page with modern design",
   "private": true,
+  "proxy": "http://localhost:3012",
   "dependencies": {
     "@types/styled-components": "^5.1.34",
     "react": "^18.2.0",
