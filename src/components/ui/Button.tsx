@@ -1,118 +1,71 @@
 import React from 'react';
-import styled, { css } from 'styled-components';
 import { theme } from '../../styles/theme';
 
-interface ButtonProps {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'small' | 'medium' | 'large';
   fullWidth?: boolean;
-  disabled?: boolean;
-  children: React.ReactNode;
-  onClick?: () => void;
-  type?: 'button' | 'submit' | 'reset';
 }
 
-const getVariantStyles = (variant: ButtonProps['variant']) => {
+const getButtonStyles = (variant: ButtonProps['variant'], size: ButtonProps['size'], fullWidth: boolean) => {
+  const baseStyles: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: 'none',
+    borderRadius: theme.borderRadius,
+    fontWeight: 600,
+    textDecoration: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    whiteSpace: 'nowrap',
+    userSelect: 'none',
+    touchAction: 'manipulation',
+    width: fullWidth ? '100%' : 'auto',
+  };
+
+  // Variant styles
   switch (variant) {
     case 'secondary':
-      return css`
-        background: ${theme.colors.secondary};
-        color: ${theme.colors.text};
-        &:hover:not(:disabled) {
-          background: ${theme.colors.primary};
-        }
-      `;
+      baseStyles.background = theme.colors.secondary;
+      baseStyles.color = theme.colors.text;
+      break;
     case 'outline':
-      return css`
-        background: transparent;
-        color: ${theme.colors.primary};
-        border: 2px solid ${theme.colors.primary};
-        &:hover:not(:disabled) {
-          background: ${theme.colors.primary};
-          color: ${theme.colors.text};
-        }
-      `;
+      baseStyles.background = 'transparent';
+      baseStyles.color = theme.colors.primary;
+      baseStyles.border = `2px solid ${theme.colors.primary}`;
+      break;
     case 'ghost':
-      return css`
-        background: transparent;
-        color: ${theme.colors.textSecondary};
-        &:hover:not(:disabled) {
-          background: ${theme.colors.surface};
-          color: ${theme.colors.text};
-        }
-      `;
-    default:
-      return css`
-        background: ${theme.colors.primary};
-        color: ${theme.colors.text};
-        &:hover:not(:disabled) {
-          background: ${theme.colors.secondary};
-        }
-      `;
+      baseStyles.background = 'transparent';
+      baseStyles.color = theme.colors.textSecondary;
+      break;
+    default: // primary
+      baseStyles.background = theme.colors.primary;
+      baseStyles.color = theme.colors.text;
+      break;
   }
-};
 
-const getSizeStyles = (size: ButtonProps['size']) => {
+  // Size styles
   switch (size) {
     case 'small':
-      return css`
-        padding: ${theme.spacing.sm} ${theme.spacing.md};
-        font-size: 0.875rem;
-        min-height: 36px;
-      `;
+      baseStyles.padding = `${theme.spacing.sm} ${theme.spacing.md}`;
+      baseStyles.fontSize = '0.875rem';
+      baseStyles.minHeight = '36px';
+      break;
     case 'large':
-      return css`
-        padding: ${theme.spacing.md} ${theme.spacing.xl};
-        font-size: 1.125rem;
-        min-height: 56px;
-      `;
-    default:
-      return css`
-        padding: ${theme.spacing.md} ${theme.spacing.lg};
-        font-size: 1rem;
-        min-height: 48px;
-      `;
+      baseStyles.padding = `${theme.spacing.md} ${theme.spacing.xl}`;
+      baseStyles.fontSize = '1.125rem';
+      baseStyles.minHeight = '56px';
+      break;
+    default: // medium
+      baseStyles.padding = `${theme.spacing.md} ${theme.spacing.lg}`;
+      baseStyles.fontSize = '1rem';
+      baseStyles.minHeight = '48px';
+      break;
   }
+
+  return baseStyles;
 };
-
-const StyledButton = styled.button<ButtonProps>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: ${theme.borderRadius};
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  user-select: none;
-  touch-action: manipulation;
-  
-  ${({ variant = 'primary' }) => getVariantStyles(variant)}
-  ${({ size = 'medium' }) => getSizeStyles(size)}
-  ${({ fullWidth }) =>
-    fullWidth &&
-    css`
-      width: 100%;
-    `}
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
-
-  &:focus {
-    outline: 2px solid ${theme.colors.accent};
-    outline-offset: 2px;
-  }
-
-  /* Mobile touch improvements */
-  @media (hover: none) and (pointer: coarse) {
-    min-height: 44px; /* iOS minimum touch target */
-  }
-`;
 
 export const Button: React.FC<ButtonProps> = ({
   children,
@@ -122,19 +75,56 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   onClick,
   type = 'button',
+  className = '',
+  style,
   ...props
 }) => {
+  const buttonStyles = getButtonStyles(variant, size, fullWidth);
+  
+  const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (disabled) return;
+    
+    const button = e.currentTarget;
+    if (variant === 'outline') {
+      button.style.background = theme.colors.primary;
+      button.style.color = theme.colors.text;
+    } else if (variant === 'ghost') {
+      button.style.background = theme.colors.surface;
+      button.style.color = theme.colors.text;
+    } else if (variant === 'secondary') {
+      button.style.background = theme.colors.primary;
+    } else {
+      button.style.background = theme.colors.secondary;
+    }
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (disabled) return;
+    
+    const button = e.currentTarget;
+    const originalStyles = getButtonStyles(variant, size, fullWidth);
+    button.style.background = originalStyles.background as string;
+    button.style.color = originalStyles.color as string;
+  };
+
   return (
-    <StyledButton
-      variant={variant}
-      size={size}
-      fullWidth={fullWidth}
+    <button
+      type={type}
       disabled={disabled}
       onClick={onClick}
-      type={type}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={className}
+      style={{
+        ...buttonStyles,
+        ...style,
+        opacity: disabled ? 0.6 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        pointerEvents: disabled ? 'none' : 'auto',
+      }}
       {...props}
     >
       {children}
-    </StyledButton>
+    </button>
   );
 };
