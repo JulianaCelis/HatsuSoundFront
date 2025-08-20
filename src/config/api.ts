@@ -18,6 +18,13 @@ export const API_CONFIG = {
       ADMIN_ONLY: '/users/admin-only',
       MODERATOR_OR_ADMIN: '/users/moderator-or-admin',
     },
+    AUDIO_PRODUCTS: {
+      LIST: '/api/audio-products',
+      SEARCH: '/api/audio-products/search',
+      BY_ID: '/api/audio-products/:id',
+      PLAY: '/api/audio-products/:id/play',
+      DOWNLOAD: '/api/audio-products/:id/download',
+    },
   },
   
   // Request configuration
@@ -53,6 +60,15 @@ export const buildApiUrl = (endpoint: string): string => {
 // Helper function to get storage key
 export const getStorageKey = (key: keyof typeof API_CONFIG.TOKEN.STORAGE_KEYS): string => {
   return API_CONFIG.TOKEN.STORAGE_KEYS[key];
+};
+
+// Helper function to build audio products API URL
+export const buildAudioProductsUrl = (endpoint: string, id?: string): string => {
+  let url = buildApiUrl(endpoint);
+  if (id) {
+    url = url.replace(':id', id);
+  }
+  return url;
 };
 
 export default API_CONFIG;
