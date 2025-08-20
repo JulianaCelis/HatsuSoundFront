@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Header.css';
 import AuthModal from '../ui/AuthModal';
 import SecretModal from '../ui/SecretModal';
@@ -39,6 +40,8 @@ const TOTAL_TRACK_DURATION = 180;
 const Header: React.FC = () => {
   const { user, isAuthenticated, logout, logoutAll } = useAuth();
   const { showSuccess, showInfo } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const [headerState, setHeaderState] = useState<HeaderState>({
     isMobileMenuOpen: false,
@@ -408,7 +411,7 @@ const Header: React.FC = () => {
   );
 
   const EnhancedSearch: React.FC = () => {
-    const recentSearches: string[] = ['Lo-fi Hip Hop', 'Synthwave Classics', 'Jazz Nocturno'];
+    const recentSearches: string[] = ['Rock Clásico', 'Pop 80s', 'Jazz Nocturno', 'Hip Hop', 'Electrónica'];
     const searchRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     
@@ -468,10 +471,26 @@ const Header: React.FC = () => {
           <SearchIcon className={`search-icon ${headerState.searchState === 'focused' ? 'focused' : ''}`} />
           <input
             type="text"
-            placeholder="Buscar canciones, artistas, álbumes..."
+            placeholder="Buscar canciones, artistas, géneros..."
             className="search-input"
             onFocus={handleSearchFocus}
             onBlur={handleSearchBlur}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                const target = e.target as HTMLInputElement;
+                if (target.value.trim()) {
+                  // Scroll to products section and trigger search
+                  const productsSection = document.querySelector('#products');
+                  if (productsSection) {
+                    productsSection.scrollIntoView({ behavior: 'smooth' });
+                    // You can add a custom event to trigger search in ProductList
+                    window.dispatchEvent(new CustomEvent('headerSearch', { 
+                      detail: { query: target.value.trim() } 
+                    }));
+                  }
+                }
+              }
+            }}
           />
           <div className="search-shortcut">
             {headerState.searchState === 'focused' && (
@@ -488,14 +507,23 @@ const Header: React.FC = () => {
             <div className="dropdown-content">
               <div className="recent-searches-title">BÚSQUEDAS RECIENTES</div>
               {recentSearches.map((item: string, i: number) => (
-                <button
-                  key={i}
-                  className="search-result-item"
-                  onClick={() => {
-                    // Handle search selection here
-                    console.log('Searching for:', item);
-                  }}
-                >
+                                  <button
+                    key={i}
+                    className="search-result-item"
+                    onClick={() => {
+                      // Handle search selection here
+                      console.log('Searching for:', item);
+                      // Scroll to products section and trigger search
+                      const productsSection = document.querySelector('#products');
+                      if (productsSection) {
+                        productsSection.scrollIntoView({ behavior: 'smooth' });
+                        // Trigger search with the selected item
+                        window.dispatchEvent(new CustomEvent('headerSearch', { 
+                          detail: { query: item } 
+                        }));
+                      }
+                    }}
+                  >
                   <div className="search-result-icon">
                     <MusicIcon className="search-result-music-icon" />
                   </div>
@@ -510,19 +538,19 @@ const Header: React.FC = () => {
   };
 
   const navigationItems: NavigationItem[] = [
-    { name: 'Descubrir', icon: RadioIcon, color: 'purple' },
-    { name: 'Radio', icon: RadioIcon, color: 'blue' },
-    { name: 'Podcasts', icon: MicIcon, color: 'green' },
-    { name: 'Live', icon: ZapIcon, color: 'orange' },
+    { name: 'Inicio', icon: RadioIcon, color: 'purple', href: '/' },
+    { name: 'Catálogo', icon: RadioIcon, color: 'blue', href: '/products' },
+    { name: 'Géneros', icon: RadioIcon, color: 'green', href: '#genres' },
+    { name: 'Artistas', icon: MicIcon, color: 'orange', href: '#artists' },
   ];
 
   const mobileNavigationItems: NavigationItem[] = [
-    { name: 'Descubrir', icon: RadioIcon, color: 'purple' },
-    { name: 'Radio', icon: RadioIcon, color: 'blue' },
-    { name: 'Podcasts', icon: MicIcon, color: 'green' },
-    { name: 'Live', icon: ZapIcon, color: 'orange' },
-    { name: 'Favoritos', icon: HeartIcon, color: 'red' },
-    { name: 'Descargas', icon: DownloadIcon, color: 'cyan' },
+    { name: 'Inicio', icon: RadioIcon, color: 'purple', href: '/' },
+    { name: 'Catálogo', icon: RadioIcon, color: 'blue', href: '/products' },
+    { name: 'Géneros', icon: RadioIcon, color: 'green', href: '#genres' },
+    { name: 'Artistas', icon: MicIcon, color: 'orange', href: '#artists' },
+    { name: 'Favoritos', icon: HeartIcon, color: 'red', href: '#favorites' },
+    { name: 'Descargas', icon: DownloadIcon, color: 'cyan', href: '#downloads' },
   ];
 
   return (
@@ -540,7 +568,10 @@ const Header: React.FC = () => {
             
             <button 
               className="logo-button" 
-              onClick={togglePlay}
+              onClick={() => {
+                navigate('/');
+                togglePlay();
+              }}
             >
               <div className="logo-icon-container">
                 <div className={`logo-glow ${headerState.playState === 'playing' ? 'playing' : ''}`} />
@@ -552,12 +583,16 @@ const Header: React.FC = () => {
                     <PlayIcon className="play-pause-icon play" />
                   )}
                   
-                  {headerState.playState === 'playing' && (
-                    <>
-                      <div className="logo-ping-border" />
-                      <div className="logo-pulse-border" />
-                    </>
-                  )}
+                                  {headerState.playState === 'playing' && (
+                  <>
+                    <div className="logo-ping-border" />
+                    <div className="logo-pulse-border" />
+                    <div className="playing-indicator">
+                      <span className="playing-dot"></span>
+                      <span className="playing-text">LIVE</span>
+                    </div>
+                  </>
+                )}
                 </div>
 
                 {headerState.playState === 'playing' && (
@@ -598,6 +633,18 @@ const Header: React.FC = () => {
                       key={item.name}
                       className={`nav-item nav-${item.color}`}
                       style={{ animationDelay: `${index * 100}ms` }}
+                      onClick={() => {
+                        if (item.href) {
+                          if (item.href.startsWith('/')) {
+                            navigate(item.href);
+                          } else {
+                            const element = document.querySelector(item.href);
+                            if (element) {
+                              element.scrollIntoView({ behavior: 'smooth' });
+                            }
+                          }
+                        }
+                      }}
                     >
                       <div className="nav-item-background" />
                       
@@ -709,14 +756,17 @@ const Header: React.FC = () => {
             </button>
           </div>
 
-          {headerState.playState === 'playing' && (
-            <div className="progress-bar">
-              <div 
-                className="progress-fill"
-                style={{ width: `${getProgressPercentage()}%` }}
-              />
-            </div>
-          )}
+                      {headerState.playState === 'playing' && (
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill"
+                  style={{ width: `${getProgressPercentage()}%` }}
+                />
+                <div className="now-playing-info">
+                  <span className="now-playing-text">🎵 Reproduciendo: Bohemian Rhapsody - Queen</span>
+                </div>
+              </div>
+            )}
         </nav>
       </header>
 
@@ -754,7 +804,19 @@ const Header: React.FC = () => {
                   <div
                     key={item.name}
                     className={`mobile-menu-item mobile-${item.color}`}
-                    onClick={closeMobileMenu}
+                    onClick={() => {
+                      closeMobileMenu();
+                      if (item.href) {
+                        if (item.href.startsWith('/')) {
+                          navigate(item.href);
+                        } else {
+                          const element = document.querySelector(item.href);
+                          if (element) {
+                            element.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }
+                      }
+                    }}
                   >
                     <Icon className="mobile-menu-item-icon" />
                     <span className="mobile-menu-item-text">{item.name}</span>
@@ -781,7 +843,8 @@ const Header: React.FC = () => {
                     <PlayIcon className="mobile-player-play-icon" />
                   </div>
                   <div className="mobile-player-info">
-                    <p className="mobile-player-title">Demo Track</p>
+                    <p className="mobile-player-title">Bohemian Rhapsody</p>
+                    <p className="mobile-player-artist">Queen</p>
                     <p className="mobile-player-time">{formatTime(headerState.currentTime)} / 3:00</p>
                   </div>
                   <AdvancedAudioVisualizer />

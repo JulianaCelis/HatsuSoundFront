@@ -1,5 +1,4 @@
 import React from 'react';
-import { theme } from '../../styles/theme';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
@@ -13,7 +12,7 @@ const getButtonStyles = (variant: ButtonProps['variant'], size: ButtonProps['siz
     alignItems: 'center',
     justifyContent: 'center',
     border: 'none',
-    borderRadius: theme.borderRadius,
+    borderRadius: '12px',
     fontWeight: 600,
     textDecoration: 'none',
     cursor: 'pointer',
@@ -27,38 +26,38 @@ const getButtonStyles = (variant: ButtonProps['variant'], size: ButtonProps['siz
   // Variant styles
   switch (variant) {
     case 'secondary':
-      baseStyles.background = theme.colors.secondary;
-      baseStyles.color = theme.colors.text;
+      baseStyles.background = '#8b5cf6';
+      baseStyles.color = '#ffffff';
       break;
     case 'outline':
       baseStyles.background = 'transparent';
-      baseStyles.color = theme.colors.primary;
-      baseStyles.border = `2px solid ${theme.colors.primary}`;
+      baseStyles.color = '#6366f1';
+      baseStyles.border = '2px solid #6366f1';
       break;
     case 'ghost':
       baseStyles.background = 'transparent';
-      baseStyles.color = theme.colors.textSecondary;
+      baseStyles.color = '#a1a1aa';
       break;
     default: // primary
-      baseStyles.background = theme.colors.primary;
-      baseStyles.color = theme.colors.text;
+      baseStyles.background = '#6366f1';
+      baseStyles.color = '#ffffff';
       break;
   }
 
   // Size styles
   switch (size) {
     case 'small':
-      baseStyles.padding = `${theme.spacing.sm} ${theme.spacing.md}`;
+      baseStyles.padding = '0.5rem 1rem';
       baseStyles.fontSize = '0.875rem';
       baseStyles.minHeight = '36px';
       break;
     case 'large':
-      baseStyles.padding = `${theme.spacing.md} ${theme.spacing.xl}`;
+      baseStyles.padding = '1rem 2rem';
       baseStyles.fontSize = '1.125rem';
       baseStyles.minHeight = '56px';
       break;
     default: // medium
-      baseStyles.padding = `${theme.spacing.md} ${theme.spacing.lg}`;
+      baseStyles.padding = '1rem 1.5rem';
       baseStyles.fontSize = '1rem';
       baseStyles.minHeight = '48px';
       break;
@@ -86,15 +85,15 @@ export const Button: React.FC<ButtonProps> = ({
     
     const button = e.currentTarget;
     if (variant === 'outline') {
-      button.style.background = theme.colors.primary;
-      button.style.color = theme.colors.text;
+      button.style.background = '#6366f1';
+      button.style.color = '#ffffff';
     } else if (variant === 'ghost') {
-      button.style.background = theme.colors.surface;
-      button.style.color = theme.colors.text;
+      button.style.background = '#1a1a2e';
+      button.style.color = '#ffffff';
     } else if (variant === 'secondary') {
-      button.style.background = theme.colors.primary;
+      button.style.background = '#6366f1';
     } else {
-      button.style.background = theme.colors.secondary;
+      button.style.background = '#8b5cf6';
     }
   };
 
@@ -103,25 +102,20 @@ export const Button: React.FC<ButtonProps> = ({
     
     const button = e.currentTarget;
     const originalStyles = getButtonStyles(variant, size, fullWidth);
-    button.style.background = originalStyles.background as string;
-    button.style.color = originalStyles.color as string;
+    
+    button.style.background = (originalStyles.background as string) || '';
+    button.style.color = (originalStyles.color as string) || '';
   };
 
   return (
     <button
       type={type}
+      className={className}
+      style={{ ...buttonStyles, ...style }}
       disabled={disabled}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={className}
-      style={{
-        ...buttonStyles,
-        ...style,
-        opacity: disabled ? 0.6 : 1,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        pointerEvents: disabled ? 'none' : 'auto',
-      }}
       {...props}
     >
       {children}

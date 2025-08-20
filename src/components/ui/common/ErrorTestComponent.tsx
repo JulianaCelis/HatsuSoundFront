@@ -1,5 +1,5 @@
 import React from 'react';
-import { useError } from '../contexts/ErrorContext';
+import { useError } from '../../../contexts/ErrorContext';
 
 const ErrorTestComponent: React.FC = () => {
   const { setError } = useError();

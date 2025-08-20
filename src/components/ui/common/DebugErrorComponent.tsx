@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useError } from '../contexts/ErrorContext';
-import { useApiError } from '../hooks/useApiError';
-import { MockAuthService } from '../services/mock-auth.service';
+import { useError } from '../../../contexts/ErrorContext';
+import { useApiError } from '../../../hooks/useApiError';
+import { MockAuthService } from '../../../services/mock-auth.service';
 
 const DebugErrorComponent: React.FC = () => {
   const { error, setError } = useError();

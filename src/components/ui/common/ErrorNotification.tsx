@@ -1,7 +1,7 @@
 import React from 'react';
-import { useError } from '../contexts/ErrorContext';
-import { ErrorHandlerService } from '../services/error-handler.service';
-import '../styles/ErrorNotification.css';
+import { useError } from '../../../contexts/ErrorContext';
+import { ErrorHandlerService } from '../../../services/error-handler.service';
+import '../../../styles/ErrorNotification.css';
 
 const ErrorNotification: React.FC = () => {
   const { error, clearError } = useError();
