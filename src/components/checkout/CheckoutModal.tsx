@@ -140,7 +140,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose }) => {
   };
 
   // Actualizar datos de tarjeta
-  const updateCardData = (field: keyof typeof formData.cardData, value: string) => {
+  const updateCardData = (field: keyof NonNullable<CheckoutFormData['cardData']>, value: string) => {
     if (formData.cardData) {
       setFormData(prev => ({
         ...prev,
@@ -401,7 +401,7 @@ const ProductSelectionStep: React.FC<{
 const InformationStep: React.FC<{
   formData: CheckoutFormData;
   updateFormData: (field: keyof CheckoutFormData, value: any) => void;
-  updateCardData: (field: keyof typeof formData.cardData, value: string) => void;
+  updateCardData: (field: keyof NonNullable<CheckoutFormData['cardData']>, value: string) => void;
   paymentType: 'intent' | 'direct';
   setPaymentType: (type: 'intent' | 'direct') => void;
   showCardForm: boolean;
