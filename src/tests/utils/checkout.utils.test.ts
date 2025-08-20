@@ -1,457 +1,222 @@
-import { checkoutService } from '../../services/checkout.service';
+import {
+  validateCheckoutData,
+  formatPrice,
+  calculateTotal,
+  validateCardNumber,
+  validateExpiryDate,
+  validateCVV,
+  validateEmail
+} from '../../utils/checkout.utils';
+import { CheckoutData } from '../../types/checkout.types';
 
-describe('Checkout Utilities', () => {
-  describe('Credit Card Validation', () => {
-    describe('VISA Cards', () => {
-      it('should validate valid VISA card numbers', () => {
-        const validVisaCards = [
-          '4242424242424242',
-          '4000056655665556',
-          '4000000000000002',
-          '4000000000009999'
-        ];
-
-        validVisaCards.forEach(cardNumber => {
-          const result = checkoutService.validateCreditCard(cardNumber);
-          expect(result.isValid).toBe(true);
-          expect(result.cardType).toBe('visa');
-        });
-      });
-
-      it('should reject invalid VISA card numbers', () => {
-        const invalidVisaCards = [
-          '4242424242424241', // Luhn check fails
-          '424242424242424',  // Too short
-          '42424242424242424', // Too long
-          '5242424242424242'  // Wrong prefix
-        ];
-
-        invalidVisaCards.forEach(cardNumber => {
-          const result = checkoutService.validateCreditCard(cardNumber);
-          expect(result.isValid).toBe(false);
-        });
-      });
+describe('checkout.utils', () => {
+  describe('validateEmail', () => {
+    it('should validate correct email addresses', () => {
+      expect(validateEmail('test@example.com')).toBe(true);
+      expect(validateEmail('user.name@domain.co.uk')).toBe(true);
+      expect(validateEmail('test+tag@example.org')).toBe(true);
     });
 
-    describe('Mastercard Cards', () => {
-      it('should validate valid Mastercard numbers', () => {
-        const validMastercards = [
-          '5555555555554444',
-          '5105105105105100',
-          '5200828282828210',
-          '5105105105105100'
-        ];
-
-        validMastercards.forEach(cardNumber => {
-          const result = checkoutService.validateCreditCard(cardNumber);
-          expect(result.isValid).toBe(true);
-          expect(result.cardType).toBe('mastercard');
-        });
-      });
-
-      it('should reject invalid Mastercard numbers', () => {
-        const invalidMastercards = [
-          '5555555555554443', // Luhn check fails
-          '555555555555444',  // Too short
-          '55555555555544444', // Too long
-          '4555555555554444'  // Wrong prefix
-        ];
-
-        invalidMastercards.forEach(cardNumber => {
-          const result = checkoutService.validateCreditCard(cardNumber);
-          expect(result.isValid).toBe(false);
-        });
-      });
-    });
-
-    describe('American Express Cards', () => {
-      it('should validate valid AMEX numbers', () => {
-        const validAmexCards = [
-          '378282246310005',
-          '371449635398431',
-          '378734493671000'
-        ];
-
-        validAmexCards.forEach(cardNumber => {
-          const result = checkoutService.validateCreditCard(cardNumber);
-          expect(result.isValid).toBe(true);
-          expect(result.cardType).toBe('amex');
-        });
-      });
-
-      it('should reject invalid AMEX numbers', () => {
-        const invalidAmexCards = [
-          '378282246310004', // Luhn check fails
-          '37828224631000',  // Too short
-          '3782822463100000', // Too long
-          '278282246310005'  // Wrong prefix
-        ];
-
-        invalidAmexCards.forEach(cardNumber => {
-          const result = checkoutService.validateCreditCard(cardNumber);
-          expect(result.isValid).toBe(false);
-        });
-      });
-    });
-
-    describe('Edge Cases', () => {
-      it('should handle empty string', () => {
-        const result = checkoutService.validateCreditCard('');
-        expect(result.isValid).toBe(false);
-        expect(result.cardType).toBe('unknown');
-      });
-
-      it('should handle null and undefined', () => {
-        expect(() => checkoutService.validateCreditCard(null as any)).toThrow();
-        expect(() => checkoutService.validateCreditCard(undefined as any)).toThrow();
-      });
-
-      it('should handle non-numeric characters', () => {
-        const result = checkoutService.validateCreditCard('4242-4242-4242-4242');
-        expect(result.isValid).toBe(false);
-      });
-
-      it('should handle spaces', () => {
-        const result = checkoutService.validateCreditCard('4242 4242 4242 4242');
-        expect(result.isValid).toBe(false);
-      });
+    it('should reject invalid email addresses', () => {
+      expect(validateEmail('invalid-email')).toBe(false);
+      expect(validateEmail('test@')).toBe(false);
+      expect(validateEmail('@example.com')).toBe(false);
+      expect(validateEmail('test@.com')).toBe(false);
+      expect(validateEmail('')).toBe(false);
     });
   });
 
-  describe('CVC Validation', () => {
-    describe('VISA and Mastercard CVC', () => {
-      it('should validate 3-digit CVC for VISA', () => {
-        expect(checkoutService.validateCVC('123', 'visa')).toBe(true);
-        expect(checkoutService.validateCVC('000', 'visa')).toBe(true);
-        expect(checkoutService.validateCVC('999', 'visa')).toBe(true);
-      });
-
-      it('should reject invalid CVC for VISA', () => {
-        expect(checkoutService.validateCVC('12', 'visa')).toBe(false);
-        expect(checkoutService.validateCVC('1234', 'visa')).toBe(false);
-        expect(checkoutService.validateCVC('12a', 'visa')).toBe(false);
-        expect(checkoutService.validateCVC('', 'visa')).toBe(false);
-      });
-
-      it('should validate 3-digit CVC for Mastercard', () => {
-        expect(checkoutService.validateCVC('123', 'mastercard')).toBe(true);
-        expect(checkoutService.validateCVC('000', 'mastercard')).toBe(true);
-        expect(checkoutService.validateCVC('999', 'mastercard')).toBe(true);
-      });
+  describe('validateCardNumber', () => {
+    it('should validate correct card numbers', () => {
+      expect(validateCardNumber('4242424242424242')).toBe(true);
+      expect(validateCardNumber('4000056655665556')).toBe(true);
+      expect(validateCardNumber('5555555555554444')).toBe(true);
     });
 
-    describe('American Express CVC', () => {
-      it('should validate 4-digit CVC for AMEX', () => {
-        expect(checkoutService.validateCVC('1234', 'amex')).toBe(true);
-        expect(checkoutService.validateCVC('0000', 'amex')).toBe(true);
-        expect(checkoutService.validateCVC('9999', 'amex')).toBe(true);
-      });
-
-      it('should reject invalid CVC for AMEX', () => {
-        expect(checkoutService.validateCVC('123', 'amex')).toBe(false);
-        expect(checkoutService.validateCVC('12345', 'amex')).toBe(false);
-        expect(checkoutService.validateCVC('123a', 'amex')).toBe(false);
-        expect(checkoutService.validateCVC('', 'amex')).toBe(false);
-      });
+    it('should reject invalid card numbers', () => {
+      expect(validateCardNumber('1234567890123456')).toBe(false);
+      expect(validateCardNumber('123456789012')).toBe(false); // Too short
+      expect(validateCardNumber('12345678901234567890')).toBe(false); // Too long
+      expect(validateCardNumber('')).toBe(false);
+      expect(validateCardNumber('abc123def456ghi')).toBe(false);
     });
 
-    describe('Edge Cases', () => {
-      it('should handle empty CVC', () => {
-        expect(checkoutService.validateCVC('', 'visa')).toBe(false);
-        expect(checkoutService.validateCVC('', 'mastercard')).toBe(false);
-        expect(checkoutService.validateCVC('', 'amex')).toBe(false);
-      });
-
-      it('should handle non-numeric CVC', () => {
-        expect(checkoutService.validateCVC('abc', 'visa')).toBe(false);
-        expect(checkoutService.validateCVC('12a', 'visa')).toBe(false);
-        expect(checkoutService.validateCVC('a12', 'visa')).toBe(false);
-      });
-
-      it('should handle unknown card types', () => {
-        expect(checkoutService.validateCVC('123', 'unknown')).toBe(false);
-        expect(checkoutService.validateCVC('1234', 'unknown')).toBe(false);
-      });
+    it('should handle spaces and dashes in card numbers', () => {
+      expect(validateCardNumber('4242 4242 4242 4242')).toBe(true);
+      expect(validateCardNumber('4242-4242-4242-4242')).toBe(true);
     });
   });
 
-  describe('Expiry Date Validation', () => {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
-
-    describe('Valid Dates', () => {
-      it('should validate future dates', () => {
-        // Next month, current year
-        expect(checkoutService.validateExpiryDate(
-          (currentMonth + 1).toString().padStart(2, '0'),
-          currentYear.toString()
-        )).toBe(true);
-
-        // Any month, next year
-        expect(checkoutService.validateExpiryDate('01', (currentYear + 1).toString())).toBe(true);
-        expect(checkoutService.validateExpiryDate('12', (currentYear + 1).toString())).toBe(true);
-
-        // Far future
-        expect(checkoutService.validateExpiryDate('01', (currentYear + 10).toString())).toBe(true);
-      });
-
-      it('should validate edge case dates', () => {
-        // First month of next year
-        expect(checkoutService.validateExpiryDate('01', (currentYear + 1).toString())).toBe(true);
-        
-        // Last month of next year
-        expect(checkoutService.validateExpiryDate('12', (currentYear + 1).toString())).toBe(true);
-      });
+  describe('validateExpiryDate', () => {
+    it('should validate correct expiry dates', () => {
+      expect(validateExpiryDate('12/25')).toBe(true);
+      expect(validateExpiryDate('01/30')).toBe(true);
+      expect(validateExpiryDate('06/26')).toBe(true); // Future date
     });
 
-    describe('Invalid Dates', () => {
-      it('should reject past dates', () => {
-        // Past year
-        expect(checkoutService.validateExpiryDate('12', (currentYear - 1).toString())).toBe(false);
-        
-        // Past month in current year
-        if (currentMonth > 1) {
-          expect(checkoutService.validateExpiryDate(
-            (currentMonth - 1).toString().padStart(2, '0'),
-            currentYear.toString()
-          )).toBe(false);
-        }
-      });
-
-      it('should reject current month in current year', () => {
-        expect(checkoutService.validateExpiryDate(
-          currentMonth.toString().padStart(2, '0'),
-          currentYear.toString()
-        )).toBe(false);
-      });
-
-      it('should reject invalid month values', () => {
-        expect(checkoutService.validateExpiryDate('00', (currentYear + 1).toString())).toBe(false);
-        expect(checkoutService.validateExpiryDate('13', (currentYear + 1).toString())).toBe(false);
-        expect(checkoutService.validateExpiryDate('99', (currentYear + 1).toString())).toBe(false);
-      });
-
-      it('should reject invalid year values', () => {
-        expect(checkoutService.validateExpiryDate('12', '0')).toBe(false);
-        expect(checkoutService.validateExpiryDate('12', '99')).toBe(false);
-        expect(checkoutService.validateExpiryDate('12', 'abcd')).toBe(false);
-      });
+    it('should reject invalid expiry dates', () => {
+      expect(validateExpiryDate('13/25')).toBe(false); // Invalid month
+      expect(validateExpiryDate('00/25')).toBe(false); // Invalid month
+      expect(validateExpiryDate('12/20')).toBe(false); // Expired
+      expect(validateExpiryDate('12/5')).toBe(false); // Missing leading zero
+      expect(validateExpiryDate('1/25')).toBe(false); // Missing leading zero
+      expect(validateExpiryDate('')).toBe(false);
     });
 
-    describe('Edge Cases', () => {
-      it('should handle empty values', () => {
-        expect(checkoutService.validateExpiryDate('', (currentYear + 1).toString())).toBe(false);
-        expect(checkoutService.validateExpiryDate('12', '')).toBe(false);
-        expect(checkoutService.validateExpiryDate('', '')).toBe(false);
-      });
-
-      it('should handle non-numeric values', () => {
-        expect(checkoutService.validateExpiryDate('ab', (currentYear + 1).toString())).toBe(false);
-        expect(checkoutService.validateExpiryDate('12', 'abcd')).toBe(false);
-      });
-
-      it('should handle single digit months', () => {
-        expect(checkoutService.validateExpiryDate('1', (currentYear + 1).toString())).toBe(false);
-        expect(checkoutService.validateExpiryDate('9', (currentYear + 1).toString())).toBe(false);
-      });
+    it('should handle different date formats', () => {
+      expect(validateExpiryDate('12/2025')).toBe(true);
+      expect(validateExpiryDate('12-25')).toBe(true);
     });
   });
 
-  describe('Price Formatting', () => {
-    describe('COP Currency', () => {
-      it('should format COP prices correctly', () => {
-        expect(checkoutService.formatPrice(0, 'COP')).toBe('$0.00');
-        expect(checkoutService.formatPrice(100, 'COP')).toBe('$1.00');
-        expect(checkoutService.formatPrice(1500, 'COP')).toBe('$15.00');
-        expect(checkoutService.formatPrice(1599, 'COP')).toBe('$15.99');
-        expect(checkoutService.formatPrice(100000, 'COP')).toBe('$1,000.00');
-        expect(checkoutService.formatPrice(1000000, 'COP')).toBe('$10,000.00');
-      });
-
-      it('should handle edge cases for COP', () => {
-        expect(checkoutService.formatPrice(1, 'COP')).toBe('$0.01');
-        expect(checkoutService.formatPrice(99, 'COP')).toBe('$0.99');
-        expect(checkoutService.formatPrice(999999, 'COP')).toBe('$9,999.99');
-      });
+  describe('validateCVV', () => {
+    it('should validate correct CVV codes', () => {
+      expect(validateCVV('123')).toBe(true);
+      expect(validateCVV('456')).toBe(true);
+      expect(validateCVV('789')).toBe(true);
+      expect(validateCVV('1234')).toBe(true); // 4-digit CVV
     });
 
-    describe('USD Currency', () => {
-      it('should format USD prices correctly', () => {
-        expect(checkoutService.formatPrice(0, 'USD')).toBe('$0.00');
-        expect(checkoutService.formatPrice(100, 'USD')).toBe('$1.00');
-        expect(checkoutService.formatPrice(1500, 'USD')).toBe('$15.00');
-        expect(checkoutService.formatPrice(1599, 'USD')).toBe('$15.99');
-        expect(checkoutService.formatPrice(100000, 'USD')).toBe('$1,000.00');
-      });
-    });
-
-    describe('EUR Currency', () => {
-      it('should format EUR prices correctly', () => {
-        expect(checkoutService.formatPrice(0, 'EUR')).toBe('€0.00');
-        expect(checkoutService.formatPrice(100, 'EUR')).toBe('€1.00');
-        expect(checkoutService.formatPrice(1500, 'EUR')).toBe('€15.00');
-        expect(checkoutService.formatPrice(1599, 'EUR')).toBe('€15.99');
-        expect(checkoutService.formatPrice(100000, 'EUR')).toBe('€1,000.00');
-      });
-    });
-
-    describe('Edge Cases', () => {
-      it('should handle negative amounts', () => {
-        expect(checkoutService.formatPrice(-100, 'COP')).toBe('-$1.00');
-        expect(checkoutService.formatPrice(-1500, 'USD')).toBe('-$15.00');
-        expect(checkoutService.formatPrice(-2000, 'EUR')).toBe('-€20.00');
-      });
-
-      it('should handle very large amounts', () => {
-        expect(checkoutService.formatPrice(999999999, 'COP')).toBe('$9,999,999.99');
-        expect(checkoutService.formatPrice(1000000000, 'USD')).toBe('$10,000,000.00');
-      });
-
-      it('should handle decimal precision', () => {
-        expect(checkoutService.formatPrice(1001, 'COP')).toBe('$10.01');
-        expect(checkoutService.formatPrice(1009, 'USD')).toBe('$10.09');
-        expect(checkoutService.formatPrice(1090, 'EUR')).toBe('€10.90');
-      });
+    it('should reject invalid CVV codes', () => {
+      expect(validateCVV('12')).toBe(false); // Too short
+      expect(validateCVV('12345')).toBe(false); // Too long
+      expect(validateCVV('abc')).toBe(false); // Non-numeric
+      expect(validateCVV('')).toBe(false);
     });
   });
 
-  describe('Checkout Summary Calculation', () => {
-    describe('COP Currency', () => {
-      it('should calculate summary correctly for COP', () => {
-        const summary = checkoutService.calculateCheckoutSummary(5000, 'COP');
-        
-        expect(summary.subtotal).toBe(5000);
-        expect(summary.baseFee).toBe(500); // 10% of 5000
-        expect(summary.deliveryFee).toBe(2000); // Fixed $20.00
-        expect(summary.total).toBe(7500); // 5000 + 500 + 2000
-      });
-
-      it('should handle zero subtotal for COP', () => {
-        const summary = checkoutService.calculateCheckoutSummary(0, 'COP');
-        
-        expect(summary.subtotal).toBe(0);
-        expect(summary.baseFee).toBe(0);
-        expect(summary.deliveryFee).toBe(2000);
-        expect(summary.total).toBe(2000);
-      });
-
-      it('should handle minimum amounts for COP', () => {
-        const summary = checkoutService.calculateCheckoutSummary(100, 'COP');
-        
-        expect(summary.subtotal).toBe(100);
-        expect(summary.baseFee).toBe(10); // 10% of 100
-        expect(summary.deliveryFee).toBe(2000);
-        expect(summary.total).toBe(2110);
-      });
+  describe('formatPrice', () => {
+    it('should format prices correctly', () => {
+      expect(formatPrice(0)).toBe('$0.00');
+      expect(formatPrice(99.99)).toBe('$99.99');
+      expect(formatPrice(1000)).toBe('$1,000.00');
+      expect(formatPrice(1234.56)).toBe('$1,234.56');
+      expect(formatPrice(1000000)).toBe('$1,000,000.00');
     });
 
-    describe('USD Currency', () => {
-      it('should calculate summary correctly for USD', () => {
-        const summary = checkoutService.calculateCheckoutSummary(1000, 'USD');
-        
-        expect(summary.subtotal).toBe(1000);
-        expect(summary.baseFee).toBe(100); // 10% of 1000
-        expect(summary.deliveryFee).toBe(500); // Fixed $5.00
-        expect(summary.total).toBe(1600); // 1000 + 100 + 500
-      });
-
-      it('should handle different amounts for USD', () => {
-        const summary = checkoutService.calculateCheckoutSummary(2500, 'USD');
-        
-        expect(summary.subtotal).toBe(2500);
-        expect(summary.baseFee).toBe(250); // 10% of 2500
-        expect(summary.deliveryFee).toBe(500);
-        expect(summary.total).toBe(3250);
-      });
+    it('should handle negative prices', () => {
+      expect(formatPrice(-99.99)).toBe('-$99.99');
+      expect(formatPrice(-1000)).toBe('-$1,000.00');
     });
 
-    describe('EUR Currency', () => {
-      it('should calculate summary correctly for EUR', () => {
-        const summary = checkoutService.calculateCheckoutSummary(2000, 'EUR');
-        
-        expect(summary.subtotal).toBe(2000);
-        expect(summary.baseFee).toBe(200); // 10% of 2000
-        expect(summary.deliveryFee).toBe(1000); // Fixed €10.00
-        expect(summary.total).toBe(3200); // 2000 + 200 + 1000
-      });
-    });
-
-    describe('Edge Cases', () => {
-      it('should handle very small amounts', () => {
-        const summary = checkoutService.calculateCheckoutSummary(1, 'COP');
-        
-        expect(summary.subtotal).toBe(1);
-        expect(summary.baseFee).toBe(0); // Rounded down
-        expect(summary.deliveryFee).toBe(2000);
-        expect(summary.total).toBe(2001);
-      });
-
-      it('should handle very large amounts', () => {
-        const summary = checkoutService.calculateCheckoutSummary(1000000, 'COP');
-        
-        expect(summary.subtotal).toBe(1000000);
-        expect(summary.baseFee).toBe(100000); // 10% of 1000000
-        expect(summary.deliveryFee).toBe(2000);
-        expect(summary.total).toBe(1102000);
-      });
-
-      it('should handle negative amounts', () => {
-        const summary = checkoutService.calculateCheckoutSummary(-1000, 'COP');
-        
-        expect(summary.subtotal).toBe(-1000);
-        expect(summary.baseFee).toBe(-100); // 10% of -1000
-        expect(summary.deliveryFee).toBe(2000);
-        expect(summary.total).toBe(900); // -1000 + (-100) + 2000
-      });
+    it('should handle decimal precision', () => {
+      expect(formatPrice(99.999)).toBe('$100.00'); // Rounds up
+      expect(formatPrice(99.001)).toBe('$99.00'); // Rounds down
     });
   });
 
-  describe('Integration Tests', () => {
-    it('should work together for a complete checkout flow', () => {
-      // Simulate a complete checkout validation
-      const cardNumber = '4242424242424242';
-      const cvc = '123';
-      const expMonth = '12';
-      const expYear = '2025';
-      const amount = 5000;
-      const currency = 'COP';
+  describe('calculateTotal', () => {
+    it('should calculate total correctly', () => {
+      const items = [
+        { id: '1', name: 'Product 1', price: 50.00, quantity: 2, image: 'img1.jpg' },
+        { id: '2', name: 'Product 2', price: 25.00, quantity: 1, image: 'img2.jpg' }
+      ];
 
-      // Validate card
-      const cardValidation = checkoutService.validateCreditCard(cardNumber);
-      expect(cardValidation.isValid).toBe(true);
-      expect(cardValidation.cardType).toBe('visa');
-
-      // Validate CVC
-      expect(checkoutService.validateCVC(cvc, cardValidation.cardType)).toBe(true);
-
-      // Validate expiry date
-      expect(checkoutService.validateExpiryDate(expMonth, expYear)).toBe(true);
-
-      // Calculate summary
-      const summary = checkoutService.calculateCheckoutSummary(amount, currency);
-      expect(summary.total).toBeGreaterThan(amount);
-
-      // Format prices
-      const formattedTotal = checkoutService.formatPrice(summary.total, currency);
-      expect(formattedTotal).toContain('$');
-      expect(formattedTotal).toContain('.00');
+      expect(calculateTotal(items)).toBe(125.00);
     });
 
-    it('should handle invalid checkout data gracefully', () => {
-      // Invalid card
-      const invalidCard = '1234567890123456';
-      const cardValidation = checkoutService.validateCreditCard(invalidCard);
-      expect(cardValidation.isValid).toBe(false);
+    it('should handle empty cart', () => {
+      expect(calculateTotal([])).toBe(0);
+    });
 
-      // Invalid CVC for the card type
-      expect(checkoutService.validateCVC('1234', cardValidation.cardType)).toBe(false);
+    it('should handle single item', () => {
+      const items = [
+        { id: '1', name: 'Product 1', price: 99.99, quantity: 1, image: 'img1.jpg' }
+      ];
 
-      // Invalid expiry date
-      expect(checkoutService.validateExpiryDate('13', '2025')).toBe(false);
+      expect(calculateTotal(items)).toBe(99.99);
+    });
 
-      // Still calculate summary (business logic continues)
-      const summary = checkoutService.calculateCheckoutSummary(1000, 'COP');
-      expect(summary.total).toBeGreaterThan(0);
+    it('should handle large quantities', () => {
+      const items = [
+        { id: '1', name: 'Product 1', price: 10.00, quantity: 100, image: 'img1.jpg' }
+      ];
+
+      expect(calculateTotal(items)).toBe(1000.00);
+    });
+  });
+
+  describe('validateCheckoutData', () => {
+    const validCheckoutData: CheckoutData = {
+      email: 'test@example.com',
+      cardNumber: '4242424242424242',
+      expiryDate: '12/25',
+      cvv: '123',
+      items: [
+        { id: '1', name: 'Product 1', price: 50.00, quantity: 1, image: 'img1.jpg' }
+      ],
+      total: 50.00
+    };
+
+    it('should validate correct checkout data', () => {
+      const result = validateCheckoutData(validCheckoutData);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
+    it('should reject checkout data with invalid email', () => {
+      const invalidData = { ...validCheckoutData, email: 'invalid-email' };
+      const result = validateCheckoutData(invalidData);
+      
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Invalid email address');
+    });
+
+    it('should reject checkout data with invalid card number', () => {
+      const invalidData = { ...validCheckoutData, cardNumber: '1234567890123456' };
+      const result = validateCheckoutData(invalidData);
+      
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Invalid card number');
+    });
+
+    it('should reject checkout data with invalid expiry date', () => {
+      const invalidData = { ...validCheckoutData, expiryDate: '13/25' };
+      const result = validateCheckoutData(invalidData);
+      
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Invalid expiry date');
+    });
+
+    it('should reject checkout data with invalid CVV', () => {
+      const invalidData = { ...validCheckoutData, cvv: '12' };
+      const result = validateCheckoutData(invalidData);
+      
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Invalid CVV');
+    });
+
+    it('should reject checkout data with empty cart', () => {
+      const invalidData = { ...validCheckoutData, items: [], total: 0 };
+      const result = validateCheckoutData(invalidData);
+      
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Cart cannot be empty');
+    });
+
+    it('should reject checkout data with mismatched total', () => {
+      const invalidData = { ...validCheckoutData, total: 100.00 };
+      const result = validateCheckoutData(invalidData);
+      
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Total amount mismatch');
+    });
+
+    it('should return multiple errors for multiple validation failures', () => {
+      const invalidData = {
+        ...validCheckoutData,
+        email: 'invalid-email',
+        cardNumber: '1234567890123456',
+        cvv: '12'
+      };
+      
+      const result = validateCheckoutData(invalidData);
+      
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toHaveLength(3);
+      expect(result.errors).toContain('Invalid email address');
+      expect(result.errors).toContain('Invalid card number');
+      expect(result.errors).toContain('Invalid CVV');
     });
   });
 });

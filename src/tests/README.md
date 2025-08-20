@@ -1,315 +1,235 @@
-# Testing Structure and Guidelines
+# Testing Documentation
 
 ## Overview
 
-This directory contains comprehensive unit tests for the checkout system, following best practices and ensuring >80% code coverage as required by the technical test.
+This directory contains comprehensive tests for the HatsuSound Frontend application, ensuring code quality and reliability through automated testing.
 
-## Directory Structure
+## Test Structure
 
 ```
 src/tests/
-├── __mocks__/                    # Mock files for static assets
-│   └── fileMock.js              # Mock for CSS, images, etc.
-├── components/                   # Component tests
-│   └── checkout/
-│       └── CheckoutModal.test.tsx
-├── hooks/                       # Hook tests
-│   └── useCheckout.test.ts
-├── services/                    # Service tests
-│   └── checkout.service.test.ts
-├── utils/                       # Utility function tests
-│   └── checkout.utils.test.ts
-├── setup.ts                     # Jest setup and global mocks
-├── index.ts                     # Test exports
-└── README.md                    # This file
+├── setup.ts                          # Jest configuration and test setup
+├── index.ts                          # Test exports
+├── __mocks__/                        # Mock data and services
+│   └── checkout.mock.ts             # Checkout-related mocks
+├── services/                         # Service layer tests
+│   └── checkout.service.test.ts     # Checkout service tests
+├── hooks/                           # Custom hook tests
+│   └── useCheckout.test.ts          # useCheckout hook tests
+├── components/                      # Component tests
+│   └── checkout/                    # Checkout component tests
+│       └── CheckoutModal.test.tsx   # CheckoutModal component tests
+└── utils/                           # Utility function tests
+    └── checkout.utils.test.ts       # Checkout utility tests
 ```
-
-## Test Categories
-
-### 1. Service Tests (`services/`)
-- **checkout.service.test.ts**: Tests for the main checkout service
-  - API integration tests
-  - Error handling
-  - Network failures
-  - Response validation
-
-### 2. Hook Tests (`hooks/`)
-- **useCheckout.test.ts**: Tests for the useCheckout custom hook
-  - State management
-  - Form validation
-  - Step navigation
-  - Integration with services
-
-### 3. Component Tests (`components/`)
-- **CheckoutModal.test.tsx**: Tests for the main checkout modal
-  - Rendering tests
-  - User interactions
-  - Props handling
-  - Responsive behavior
-
-### 4. Utility Tests (`utils/`)
-- **checkout.utils.test.ts**: Tests for validation and calculation functions
-  - Credit card validation (Luhn algorithm)
-  - CVC validation
-  - Expiry date validation
-  - Price formatting
-  - Summary calculations
 
 ## Running Tests
 
-### Basic Commands
+### All Tests
 ```bash
-# Run all tests
 npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage report
-npm run test:coverage
-
-# Run tests for CI/CD
-npm run test:ci
 ```
 
-### Running Specific Tests
+### Tests with Coverage
 ```bash
-# Run tests for a specific file
-npm test -- checkout.service.test.ts
-
-# Run tests matching a pattern
-npm test -- --testNamePattern="Credit Card Validation"
-
-# Run tests in a specific directory
-npm test -- --testPathPattern="services"
+npm run test:coverage
 ```
 
-## Test Coverage Requirements
+### Watch Mode
+```bash
+npm run test:watch
+```
 
-The technical test requires **>80% code coverage** across:
-- **Statements**: 80%
-- **Branches**: 80%
-- **Functions**: 80%
-- **Lines**: 80%
+### Specific Test File
+```bash
+npm test -- --testPathPattern=checkout.service.test.ts
+```
 
-### Current Coverage Targets
-- **CheckoutService**: 95%+ (API methods, validation logic)
-- **useCheckout Hook**: 90%+ (state management, form handling)
-- **CheckoutModal Component**: 85%+ (UI rendering, user interactions)
-- **Utility Functions**: 95%+ (validation algorithms, calculations)
+### Tests Matching Pattern
+```bash
+npm test -- --testNamePattern="should validate"
+```
+
+## Test Coverage
+
+Our testing strategy aims for **>80% code coverage** across all critical components:
+
+- **Services**: 100% coverage for business logic
+- **Hooks**: 100% coverage for state management
+- **Components**: 90%+ coverage for user interactions
+- **Utilities**: 100% coverage for helper functions
+
+## Test Categories
+
+### 1. Unit Tests
+- **Services**: Test business logic in isolation
+- **Utilities**: Test helper functions with various inputs
+- **Hooks**: Test custom React hooks
+
+### 2. Component Tests
+- **Rendering**: Verify components render correctly
+- **User Interactions**: Test button clicks, form submissions
+- **State Changes**: Verify component state updates
+- **Error Handling**: Test error scenarios and edge cases
+
+### 3. Integration Tests
+- **Hook + Service**: Test hook integration with services
+- **Component + Hook**: Test component integration with hooks
 
 ## Testing Best Practices
 
-### 1. Test Structure
+### 1. Test Organization
+- Group related tests using `describe` blocks
+- Use descriptive test names that explain the expected behavior
+- Follow the pattern: "should [expected behavior] when [condition]"
+
+### 2. Mocking Strategy
+- Mock external dependencies (APIs, services)
+- Use consistent mock data across tests
+- Reset mocks between tests to avoid interference
+
+### 3. Assertions
+- Test one concept per test case
+- Use specific assertions (e.g., `toBe` vs `toEqual`)
+- Verify both positive and negative scenarios
+
+### 4. Async Testing
+- Use `async/await` for asynchronous operations
+- Wrap state changes in `act()` when testing React components
+- Use `waitFor()` for assertions that depend on async operations
+
+## Mock Data
+
+### Checkout Mocks
+Located in `__mocks__/checkout.mock.ts`:
+
+- `mockCheckoutData`: Valid checkout form data
+- `mockCheckoutResponse`: Successful checkout response
+- `mockCartItems`: Sample cart items for testing
+
+### Usage Example
 ```typescript
+import { mockCheckoutData, mockCheckoutResponse } from '../__mocks__/checkout.mock';
+
+// Use in tests
+expect(mockCheckoutData.email).toBe('test@example.com');
+```
+
+## Common Test Patterns
+
+### Testing React Components
+```typescript
+import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
 describe('ComponentName', () => {
-  const defaultProps = { /* ... */ };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
+  it('should render correctly', () => {
+    render(<ComponentName />);
+    expect(screen.getByText('Expected Text')).toBeInTheDocument();
   });
 
-  describe('Rendering', () => {
-    it('should render correctly', () => {
-      // Test implementation
-    });
-  });
-
-  describe('User Interactions', () => {
-    it('should handle user input', () => {
-      // Test implementation
-    });
+  it('should handle user interactions', async () => {
+    const user = userEvent.setup();
+    render(<ComponentName />);
+    
+    await user.click(screen.getByRole('button'));
+    expect(mockFunction).toHaveBeenCalled();
   });
 });
 ```
 
-### 2. Mocking Strategy
-- **Services**: Mock external API calls
-- **Contexts**: Mock React contexts (Auth, Cart)
-- **Browser APIs**: Mock localStorage, fetch, etc.
-- **Static Assets**: Mock CSS, images, fonts
-
-### 3. Assertion Patterns
+### Testing Custom Hooks
 ```typescript
-// Component rendering
-expect(screen.getByText('Expected Text')).toBeInTheDocument();
+import { renderHook, act } from '@testing-library/react';
 
-// User interactions
-expect(mockFunction).toHaveBeenCalledWith(expectedArgs);
+describe('useCustomHook', () => {
+  it('should return initial state', () => {
+    const { result } = renderHook(() => useCustomHook());
+    expect(result.current.value).toBe(initialValue);
+  });
 
-// State changes
-expect(result.current.state).toBe(expectedValue);
-
-// Error handling
-await expect(asyncFunction()).rejects.toThrow('Expected error');
+  it('should update state', async () => {
+    const { result } = renderHook(() => useCustomHook());
+    
+    await act(async () => {
+      await result.current.updateValue('new value');
+    });
+    
+    expect(result.current.value).toBe('new value');
+  });
+});
 ```
 
-## Mock Data
-
-### Test Cart Data
+### Testing Services
 ```typescript
-const mockCart = {
-  items: [
-    {
-      product: {
-        id: 'test_album_001',
-        title: 'HatsuSound Vol. 1 - Test',
-        artist: 'HatsuSound Collective',
-        genre: 'electronic',
-        format: 'mp3',
-        price: 15.99,
-        stock: 100
-      },
-      quantity: 1
-    }
-  ],
-  total: 15.99
-};
+import { CheckoutService } from '../services/checkout.service';
+
+jest.mock('../services/checkout.service');
+const mockService = CheckoutService as jest.MockedClass<typeof CheckoutService>;
+
+describe('CheckoutService', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should process checkout successfully', async () => {
+    mockService.prototype.processCheckout.mockResolvedValue(mockResponse);
+    
+    const service = new CheckoutService();
+    const result = await service.processCheckout(mockData);
+    
+    expect(result).toEqual(mockResponse);
+    expect(mockService.prototype.processCheckout).toHaveBeenCalledWith(mockData);
+  });
+});
 ```
 
-### Test User Data
-```typescript
-const mockUser = {
-  id: 'user123',
-  email: 'test@example.com',
-  name: 'Test User'
-};
+## Debugging Tests
+
+### Verbose Output
+```bash
+npm test -- --verbose
 ```
 
-### Test Credit Card Data
-```typescript
-const testCardData = {
-  number: '4242424242424242', // Valid VISA test card
-  cvc: '123',
-  expMonth: '12',
-  expYear: '2025',
-  cardHolderName: 'Test User'
-};
+### Debug Specific Test
+```bash
+npm test -- --testNamePattern="should validate email" --verbose
 ```
 
-## Integration Testing
-
-### API Integration Tests
-- Mock fetch responses
-- Test error scenarios
-- Validate request payloads
-- Test authentication headers
-
-### Context Integration Tests
-- Test hook integration with contexts
-- Validate state synchronization
-- Test error propagation
-
-## Performance Testing
-
-### Component Rendering
-- Test render performance
-- Validate memory usage
-- Test large data sets
-
-### Hook Performance
-- Test state update performance
-- Validate effect dependencies
-- Test memory leaks
-
-## Accessibility Testing
-
-### Screen Reader Support
-- Test ARIA labels
-- Validate keyboard navigation
-- Test focus management
-
-### Mobile Responsiveness
-- Test touch interactions
-- Validate responsive breakpoints
-- Test mobile-specific features
+### Coverage Report
+```bash
+npm run test:coverage
+# Opens coverage report in browser
+```
 
 ## Continuous Integration
 
-### GitHub Actions
-```yaml
-- name: Run Tests
-  run: npm run test:ci
-
-- name: Upload Coverage
-  uses: codecov/codecov-action@v3
-```
-
-### Coverage Reports
-- HTML coverage reports in `coverage/` directory
-- LCOV format for CI integration
-- Coverage thresholds enforcement
+Tests are automatically run on:
+- **Pull Requests**: All tests must pass
+- **Main Branch**: Coverage reports are generated
+- **Deployments**: Tests run before deployment
 
 ## Troubleshooting
 
 ### Common Issues
 
-#### 1. Mock Import Errors
-```typescript
-// Ensure mocks are properly configured
-jest.mock('../../services/checkout.service');
-```
+1. **Mock not working**: Ensure mocks are imported before components
+2. **Async test failures**: Wrap state changes in `act()`
+3. **Component not rendering**: Check if required props are provided
+4. **Service calls not mocked**: Verify mock setup in `beforeEach`
 
-#### 2. Context Mocking Issues
-```typescript
-// Mock React contexts properly
-jest.mock('react', () => ({
-  ...jest.requireActual('react'),
-  useContext: jest.fn()
-}));
-```
+### Getting Help
 
-#### 3. Async Test Failures
-```typescript
-// Use proper async/await patterns
-await act(async () => {
-  await result.current.processCheckout();
-});
-```
-
-#### 4. Coverage Issues
-```bash
-# Check coverage configuration
-npm run test:coverage
-
-# Verify threshold settings in jest.config.js
-```
-
-## Future Enhancements
-
-### Planned Test Additions
-- **E2E Tests**: Cypress or Playwright integration
-- **Visual Regression Tests**: Storybook + Chromatic
-- **Performance Tests**: Lighthouse CI integration
-- **Security Tests**: OWASP compliance validation
-
-### Test Automation
-- **Auto-testing**: Pre-commit hooks
-- **Test Generation**: AI-powered test creation
-- **Coverage Monitoring**: Real-time coverage tracking
+- Check Jest documentation: https://jestjs.io/
+- Review React Testing Library: https://testing-library.com/docs/react-testing-library/intro/
+- Consult team members for complex testing scenarios
 
 ## Contributing
 
-### Adding New Tests
-1. Follow the existing test structure
+When adding new tests:
+
+1. Follow the existing naming conventions
 2. Ensure >80% coverage for new code
-3. Add comprehensive edge case testing
-4. Update this README with new test information
-
-### Test Review Process
-1. All tests must pass locally
-2. Coverage thresholds must be met
-3. Tests must follow established patterns
-4. Edge cases must be covered
-
-## Resources
-
-### Testing Libraries
-- [Jest Documentation](https://jestjs.io/)
-- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
-- [Testing Library User Event](https://testing-library.com/docs/user-event/intro/)
-
-### Best Practices
-- [Kent C. Dodds Testing Blog](https://kentcdodds.com/blog/write-tests)
-- [React Testing Best Practices](https://reactjs.org/docs/testing.html)
-- [Jest Best Practices](https://jestjs.io/docs/best-practices)
+3. Add appropriate mocks for external dependencies
+4. Test both success and failure scenarios
+5. Update this README if adding new test categories
